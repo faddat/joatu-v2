@@ -26,4 +26,4 @@
     - @offers.each do |offer|
       .col-sm-4
         = render offer
-= paginate @offers
+= paginate @offers, param_name: :offers_page

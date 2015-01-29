@@ -7,7 +7,7 @@ class MessagesController < ApplicationController
   def new
     @form = MessageForm.new(Message.new)
     if params[:receiver].present?
-      receiver = User.query {|m| m.find(params[:receiver]) }
+      receiver = User.find_by_id(params[:receiver])
       @form.recipients = receiver.id
     end
     authorize @form.model
@@ -15,7 +15,7 @@ class MessagesController < ApplicationController
   end
 
   def create
-    @form = MessageForm.new(Message.new(sender: current_user))
+    @form = MessageForm.new(Message.new(sender: authenticated_user))
     if @form.validate(params[:message])
       authorize @form.model
       @message = @form.save

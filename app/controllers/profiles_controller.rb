@@ -1,24 +1,24 @@
 class ProfilesController < ApplicationController
   before_filter :authenticate_user!
-  before_action :set_profile, only: [:show, :edit, :update, :destroy]
+  before_action :set_profile, only: [:edit, :update, :destroy]
 
   respond_to :html
 
   def index
-    @profiles = Profile.query {|m| policy_scope m.all }
+    @profiles = ProfileRepo.all_for_user(authenticated_user, params[:page])
     respond_with(@profiles)
   end
 
   def show
+    @profile = ProfileRepo.find_with_offers(params[:id], params[:offers_page])
     authorize @profile
-    @offers = Offer.query {|m| @profile.model.user.offers.page(params[:page]).per(3) }
     respond_with(@profile)
   end
 
   def new
-    @profile = ProfileForm.new(Profile.new)
-    authorize @profile
-    respond_with(@profile)
+    @form = ProfileForm.new(Profile.new)
+    authorize @form.model
+    respond_with(@profile = @form)
   end
 
   def edit
@@ -26,7 +26,7 @@ class ProfilesController < ApplicationController
   end
 
   def create
-    @form = ProfileForm.new(Profile.new(user: current_user))
+    @form = ProfileForm.new(Profile.new(user: authenticated_user))
     if @form.validate(params[:profile])
       authorize @form.model
       @form.save
@@ -45,13 +45,13 @@ class ProfilesController < ApplicationController
 
   def destroy
     authorize @profile
-    @profile.destroy!
+    @profile.delete
     respond_with(@profile)
   end
 
   private
 
   def set_profile
-    @profile = Profile.query {|m| m.find(params[:id]) }
+    @profile = ProfileRepo.find(params[:id])
   end
 end

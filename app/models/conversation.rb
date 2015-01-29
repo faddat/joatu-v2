@@ -1,20 +1,11 @@
 class Conversation < DomainModel
-  self.model_class = Mailboxer::Conversation
-
   attribute :subject
-  attribute :created_at, nil, writer: :private
-  attribute :updated_at, nil, writer: :private
+  attribute :created_at
+  attribute :updated_at
 
-  association :last_sender, :User, writer: :private
-  association :last_message, :Message, writer: :private
-  collection :recipients, :User, writer: :private
-
-
-  delegate :is_participant?, :is_unread?, to: :model
-
-  def self.query
-    wrap_query_results(yield Queries.new(model_class))
-  end
+  attribute :last_sender, DomainModel.attr_type(:User)
+  attribute :last_message, DomainModel.attr_type(:Message)
+  attribute :recipients, DomainCollection[:User]
 
   def read_messages_for_user_and_box!(user_model, box)
     box_type = (box == 'trash') ? 'trash' : 'not_trash'
@@ -28,14 +19,14 @@ class Conversation < DomainModel
     user_model.reply_to_all(last_receipt, body)
   end
 
-  def persist!
-    raise "Not implemented"
-  end
-
   # Takes one parameter, the messageable that is destrying the conversation
   # (it show as trashed only for them)
-  def destroy!(destroyer)
-    @model.move_to_trash(destroyer)
+  def trash_for(user)
+    repo.trash_for(user, self)
+  end
+
+  def untrash_for(user)
+    repo.untrash_for(user, self)
   end
 
   class Queries < SimpleDelegator

@@ -8,7 +8,7 @@ class OffersController < ApplicationController
   SearchQuery = Struct.new(:search, :order_by)
 
   def index
-    @offers = Offer.query {|m| policy_scope m.includes(user: [:profile]).all.page(params[:page]) }
+    @offers = OfferRepo.all_with_creator_for_user(authenticated_user, params[:page])
     @search_form = OfferSearchForm.new(SearchQuery.new)
     respond_with(@offers)
   end
@@ -30,7 +30,7 @@ class OffersController < ApplicationController
   end
 
   def create
-    @form = OfferForm.new(Offer.new(user: current_user))
+    @form = OfferForm.new(Offer.new(user: authenticated_user))
     if @form.validate(params[:offer])
       authorize @form.model
       @form.save
@@ -49,7 +49,7 @@ class OffersController < ApplicationController
 
   def destroy
     authorize @offer
-    @offer.destroy
+    @offer.delete
     respond_with(@offer)
   end
 
@@ -57,7 +57,7 @@ class OffersController < ApplicationController
     @search_form = OfferSearchForm.new(SearchQuery.new)
     if @search_form.validate(params[:offer_search])
       @search_form.save do |search_data|
-        @offers = Offer.query {|m| policy_scope m.includes(user: [:profile]).where("title LIKE ?", "#{search_data[:search]}%").page(params[:page]) }
+        @offers = OfferRepo.search_by_string(search_data[:search], authenticated_user, params[:page])
         render :index
       end
     else
@@ -67,6 +67,6 @@ class OffersController < ApplicationController
 
   private
     def set_offer
-      @offer = Offer.query {|m| m.find(params[:id]) }
+      @offer = OfferRepo.find(params[:id])
     end
 end

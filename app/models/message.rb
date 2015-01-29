@@ -1,9 +1,7 @@
 class Message < DomainModel
-  self.model_class = Mailboxer::Message
-
-  association :conversation, :Conversation
-  association :sender, :User
-  collection :recipients, :User
+  attribute :conversation, DomainModel.attr_type(:Conversation)
+  attribute :sender, DomainModel.attr_type(:User)
+  attribute :recipients, DomainCollection[:User]
 
   attribute :subject
   attribute :body

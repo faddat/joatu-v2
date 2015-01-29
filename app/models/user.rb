@@ -2,11 +2,11 @@ class User < DomainModel
   attribute :name
   attribute :email
 
-  association :profile, :Profile
-  association :mailbox, :Mailbox
+  attribute :profile, DomainModel.attr_type(:Profile)
+  attribute :mailbox, DomainModel.attr_type(:Mailbox)
 
-  collection :offers, :Offer
-  collection :communities, :Community
+  attribute :offers, DomainCollection[:Offer]
+  attribute :communities, DomainCollection[:Community]
 
-  delegate :is_admin?, to: :model
+  # delegate :is_admin?, to: :model
 end

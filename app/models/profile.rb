@@ -1,8 +1,5 @@
-class Profile
-  include RepoStore::Persistence
-  include Virtus.model
-
-  # association :user, :User
+class Profile < DomainModel
+  attribute :user, DomainModel.attr_type(:User)
   attribute :given_name
   attribute :surname
   attribute :about_me

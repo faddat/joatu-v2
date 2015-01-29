@@ -5,7 +5,7 @@ class CommunitiesController < ApplicationController
   respond_to :html
 
   def index
-    @communities = Community.query {|m| policy_scope m.all }
+    @communities = CommunityRepo.all_for_user(authenticated_user, params[:page])
     respond_with(@communities)
   end
 
@@ -22,7 +22,7 @@ class CommunitiesController < ApplicationController
 
   def edit
     authorize @community
-    @community = CommunityForm.new(@community)
+    respond_with(CommunityForm.new(@community))
   end
 
   def create
@@ -45,12 +45,12 @@ class CommunitiesController < ApplicationController
 
   def destroy
     authorize @community
-    @community.destroy
+    @community.delete
     respond_with(@community)
   end
 
   private
     def set_community
-      @community = Community.query {|m| m.find(params[:id]) }
+      @community = CommunityRepo.find(params[:id])
     end
 end

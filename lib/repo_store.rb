@@ -21,3 +21,5 @@ module RepoStore
     "Query #{selector.class} must return results!"
   end
 end
+RepoStore.repo.register :ar, ActiveRecordAdapter.new
+RepoStore.repo.use :ar

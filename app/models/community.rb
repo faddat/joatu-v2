@@ -1,5 +1,4 @@
 class Community < DomainModel
   attribute :name
-
-  collection :members, :User
+  attribute :members, DomainCollection[:User]
 end

@@ -1,7 +1,7 @@
 class ConversationsController < ApplicationController
 
   before_filter :authenticate_user!
-  before_filter :get_mailbox, :get_box
+  before_filter :get_box
 
   # We look up conversations by user, no need to scope it too.
   skip_after_filter :verify_policy_scoped, only: :index
@@ -9,32 +9,32 @@ class ConversationsController < ApplicationController
   respond_to :html
 
   def index
-    @conversations = Conversation.query {|m| m.user_conversations(current_user, @box).page(params[:page]) }
+    @conversations = ConversationRepo.send("#{@box}_for_user", authenticated_user, params[:page])
     respond_with(@conversations)
   end
 
   def show
     @reply = MessageForm.new(Message.new)
-    @conversation = Conversation.query {|m| m.find(params[:id]) }
-    @messages = @conversation.read_messages_for_user_and_box!(current_user, @box)
+    @conversation = ConversationRepo.find(params[:id])
+    @messages = MessageRepo.read_messages(@conversation, authenticated_user, @box)
     authorize @conversation
     respond_with(@conversation)
   end
 
   def update
-    @conversation = Conversation.query {|m| m.find_by_id(params[:id]) }
+    @conversation = ConversationRepo.find(params[:id])
     authorize @conversation
     if params[:untrash].present?
-      @conversation.untrash(current_user)
+      @conversation.untrash_for(authenticated_user)
     end
     
     if params[:reply_all].present?
       @form = MessageForm.new(Message.new)
       if @form.validate(params[:message])
         @form.save do |message_data|
-          @receipt = @conversation.reply_to_all(current_user, message_data[:body])
+          @receipt = ConversationRepo.reply_to_all(@conversation, authenticated_user, message_data[:body])
         end
-        @messages = @conversation.read_messages_for_user_and_box!(current_user, @box)
+        @messages = MessageRepo.read_messages(@conversation, authenticated_user, @box)
         redirect_to action: :show
       else
         @reply = @form
@@ -45,9 +45,9 @@ class ConversationsController < ApplicationController
   end
 
   def destroy
-    @conversation = Conversation.query {|m| m.find(params[:id]) }
+    @conversation = ConversationRepo.find(params[:id])
     authorize @conversation
-    @conversation.destroy!(current_user)
+    @conversation.trash_for(authenticated_user)
 
     if params[:location].present? and params[:location] == 'conversation'
       redirect_to conversations_path(:box => :trash)
@@ -57,10 +57,6 @@ class ConversationsController < ApplicationController
   end
 
   private
-
-  def get_mailbox
-    @mailbox = current_user.mailbox
-  end
 
   def get_box
     if params[:box].blank? or !["inbox","sentbox","trash"].include?params[:box]

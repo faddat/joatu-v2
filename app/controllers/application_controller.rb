@@ -5,7 +5,14 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
 
   after_action :verify_authorized, :except => :index, unless: -> { is_a? DeviseController }
-  after_action :verify_policy_scoped, :only => :index, unless: -> { is_a? DeviseController }
+
+  def authenticated_user
+    @authenticated_user ||= UserRepo.find(current_user.id)
+  end
+
+  def pundit_user
+    authenticated_user
+  end
 
 
   protected
@@ -16,5 +23,11 @@ class ApplicationController < ActionController::Base
   def authenticate_inviter!
     authenticate_user!
     raise Pundit::NotAuthorizedError unless Pundit.policy!(current_user, :invitation).send?
+  end
+
+  # Defined to make current_user a protected method. Use
+  # authenticated_user instead, which returns the domain object!
+  def current_user
+    super
   end
 end
