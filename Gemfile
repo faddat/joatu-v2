@@ -74,7 +74,7 @@ gem 'render_anywhere', :require => false
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
-gem 'redcarpet', '~> 3.2'
+gem 'redcarpet', '~> 3.5'
 
 
 gem 'simple_usecase', github: "sweettooth/simple_usecase"
